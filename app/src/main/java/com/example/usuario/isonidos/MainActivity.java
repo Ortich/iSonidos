@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void sonido(View vista){
         Button b = (Button) findViewById(vista.getId());
-        int numSonido = Integer.valueOf(b.getTag().toString());
+        int numSonido = Integer.valueOf(b.getTag().toString())-1;
         sonidos.play(arraySonidos[numSonido] ,1,1,1,0,1);
     }
 }
