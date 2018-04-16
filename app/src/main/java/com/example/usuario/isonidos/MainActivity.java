@@ -1,44 +1,104 @@
 package com.example.usuario.isonidos;
 
-import android.media.AudioManager;
-import android.media.SoundPool;
-import android.support.v7.app.AppCompatActivity;
+import android.graphics.Color;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.VideoView;
 
 import java.lang.reflect.Field;
 
 public class MainActivity extends AppCompatActivity {
 
-    SoundPool sonidos;
-    Field[] nombreCanciones = R.raw.class.getFields();
-    int[] arraySonidos = new int[nombreCanciones.length];
-    int idCancion;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        sonidos = new SoundPool(4, AudioManager.STREAM_MUSIC,0);
-    }
+        LinearLayout principal = findViewById(R.id.botones);
 
-    @Override
-    protected  void onStart() {
-        super.onStart();
-        for(int i = 0; i<arraySonidos.length; i++){
-            try {
-                idCancion = nombreCanciones[i].getInt(nombreCanciones[i]);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
+        int numeroLinea = 0;
+        LinearLayout auxiliar = creaLineaBotones(numeroLinea);
+        principal.addView(auxiliar);
+
+        Field[] listaCanciones = R.raw.class.getFields();
+        int columnas = 5;
+        for (int i = 0; i < listaCanciones.length; i++) {
+            //creamos un botón por código y lo añadimos a la pantalla principal
+            Button b = creaBoton(i, listaCanciones);
+            //añadimos el botón al layout
+            auxiliar.addView(b);
+            if (i % columnas == columnas - 1) {
+                auxiliar = creaLineaBotones(i);
+                principal.addView(auxiliar);
             }
-            arraySonidos[i] = sonidos.load(this, idCancion , 1);
         }
     }
 
-    public void sonido(View vista){
-        Button b = (Button) findViewById(vista.getId());
-        int numSonido = Integer.valueOf(b.getTag().toString())-1;
-        sonidos.play(arraySonidos[numSonido] ,1,1,1,0,1);
+    public void sonido(View view) {
+        Log.i("etiqueta: ", findViewById(view.getId()).getTag().toString());
+        Button b = (Button) findViewById(view.getId());
+        String nombre = b.getText().toString();
+        if (nombre.substring(0, 2).contains("v_")) {
+            VideoView videoView = (VideoView) findViewById(R.id.videoView);
+            Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + view.getTag());
+            videoView.setVideoURI(uri);
+            videoView.start();
+        } else {
+            MediaPlayer m = new MediaPlayer();
+            m = MediaPlayer.create(this, (int) findViewById(view.getId()).getTag());
+            m.start();
+            m.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    mediaPlayer.stop();
+                    if (mediaPlayer != null) {
+                        mediaPlayer.release();
+                    }
+
+                }
+            });
+        }
+    }
+
+    private LinearLayout creaLineaBotones(int numeroLinea) {
+        LinearLayout.LayoutParams parametros = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT
+                , LinearLayout.LayoutParams.WRAP_CONTENT);
+        parametros.weight = 1;
+        LinearLayout linea = new LinearLayout(this);
+
+        linea.setOrientation(LinearLayout.HORIZONTAL);
+        linea.setLayoutParams(parametros);
+        linea.setId(numeroLinea);
+        return linea;
+    }
+
+    private Button creaBoton(int i, Field[] _listaCanciones) {
+        LinearLayout.LayoutParams parametrosBotones = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT);
+        parametrosBotones.weight = 1;
+        parametrosBotones.setMargins(5, 5, 5, 5);
+        parametrosBotones.gravity = Gravity.CENTER_HORIZONTAL;
+        Button b = new Button(this);
+        b.setLayoutParams(parametrosBotones);
+        b.setText(_listaCanciones[i].getName());
+        b.setTextColor(Color.WHITE);
+        b.setBackgroundColor(Color.BLUE);
+        b.setAllCaps(false); //todas las letras del botón en minúscula
+        int id = this.getResources().getIdentifier(_listaCanciones[i].getName(), "raw", this.getPackageName());
+        b.setTag(id);
+
+        b.setId(i + 50);
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sonido(view);
+            }
+        });
+        return b;
     }
 }
