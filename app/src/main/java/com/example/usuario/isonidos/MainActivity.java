@@ -1,5 +1,6 @@
 package com.example.usuario.isonidos;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -13,6 +14,9 @@ import android.widget.LinearLayout;
 import android.widget.VideoView;
 
 import java.lang.reflect.Field;
+
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -49,6 +53,14 @@ public class MainActivity extends AppCompatActivity {
             Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + view.getTag());
             videoView.setVideoURI(uri);
             videoView.start();
+            videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    VideoView videoView = (VideoView) findViewById(R.id.videoView);
+                    videoView.setVisibility(GONE);
+                    videoView.setVisibility(VISIBLE);
+                }
+            });
         } else {
             MediaPlayer m = new MediaPlayer();
             m = MediaPlayer.create(this, (int) findViewById(view.getId()).getTag());
@@ -99,6 +111,49 @@ public class MainActivity extends AppCompatActivity {
                 sonido(view);
             }
         });
+
+        b.setOnLongClickListener(new View.OnLongClickListener(){
+            @Override
+            public boolean onLongClick(View v) {
+                sonidoCopiar(v);
+                return true;
+            }
+        });
         return b;
     }
-}
+    public void sonidoCopiar(View view) {
+        Button b = (Button) findViewById(view.getId());
+        String nombre = b.getText().toString();
+
+        /**
+         * Show share dialog BOTH image and text
+         */
+//        Uri imageUri = Uri.parse("android.resource://"+getPackageName()+"/"+view.getTag());
+//        //Uri imageUri = Uri.parse(pictureFile.getAbsolutePath());
+//        Intent shareIntent = new Intent();
+//        shareIntent.setAction(Intent.ACTION_SEND);
+//        //Target whatsapp:
+//        shareIntent.setPackage("com.whatsapp");
+//        //Add text and then Image URI
+//        shareIntent.putExtra(Intent.EXTRA_TEXT, nombre+".mp3");
+//        shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+//        shareIntent.setType("audio/mp3");
+//        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//
+//        try {
+//            startActivity(shareIntent);
+//        } catch (android.content.ActivityNotFoundException ex) {
+//           // ToastHelper.MakeShortText("Whatsapp have not been installed.");
+//
+//        }
+
+
+        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+        sharingIntent.setType("audio/*");
+        Uri uri = Uri.parse("android.resource://" + getPackageName() + "/raw/" + nombre + ".mp3");
+        Log.i("nombre: ", uri.toString());
+        sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        startActivity(Intent.createChooser(sharingIntent, "Share via"));
+    }
+
+    }
